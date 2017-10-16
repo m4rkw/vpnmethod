@@ -1,0 +1,5 @@
+---
+- name: install tor
+  apt:
+    name: tor
+    state: present

@@ -1,0 +1,9 @@
+---
+- name: update apt cache
+  raw: apt-get update
+
+- name: install python
+  raw: apt-get -y install python2.7 python-pip
+
+- name: make python2.7 a python alternative
+  raw: update-alternatives --install /usr/bin/python python /usr/bin/python2.7 10

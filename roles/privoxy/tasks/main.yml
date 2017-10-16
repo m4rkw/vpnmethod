@@ -1,0 +1,26 @@
+---
+- name: install apt packages
+  apt:
+    name: privoxy
+    state: present
+  register: privoxy_package
+
+- name: copy privoxy config files
+  copy:
+    src: "files/{{ item }}"
+    dest: "/etc/privoxy/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - "config"
+    - "default.action"
+    - "match-all.action"
+  register: privoxy_config
+
+- name: restart privoxy service
+  service:
+    name: privoxy
+    state: restarted
+    enabled: yes
+  when: privoxy_package.changed or privoxy_config.changed

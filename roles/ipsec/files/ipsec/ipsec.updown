@@ -1,0 +1,6 @@
+#!/bin/bash
+
+/sbin/ip rule add from 10.2.2.51 table def
+/sbin/ip rule add from 10.2.2.61 table def
+
+exit 0

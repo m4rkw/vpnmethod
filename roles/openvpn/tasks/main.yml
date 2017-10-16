@@ -1,0 +1,96 @@
+---
+- name: install openvpn
+  apt:
+    name: openvpn
+    state: present
+  register: openvpn_package
+
+- name: create def table
+  lineinfile:
+    dest: /etc/iproute2/rt_tables
+    line: "201 def"
+
+- name: create vpn table
+  lineinfile:
+    dest: /etc/iproute2/rt_tables
+    line: "10 vpn"
+
+- name: copy masquerading script
+  copy:
+    src: iptables.sh
+    dest: /etc/network/if-pre-up.d/iptables.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: enable firewall rules
+  command: /etc/network/if-pre-up.d/iptables.sh
+
+- name: copy config
+  synchronize:
+    src: openvpn/
+    dest: /etc/openvpn/
+    owner: no
+    group: no
+    perms: no
+    times: no
+    checksum: yes
+  register: openvpn_config
+
+- name: set directory permissions
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+  with_items:
+  - /etc/openvpn
+  - /etc/openvpn/client
+  - /etc/openvpn/server
+
+- name: set permissions
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: file
+  with_items:
+  - /etc/openvpn/ipredator.ca.crt
+  - /etc/openvpn/ipredator_down.sh
+  - /etc/openvpn/ipredator.conf
+  - /etc/openvpn/ipredator_up.sh
+  - /etc/openvpn/update-resolv-conf
+  register: openvpn_perms
+
+- name: template ipredator.auth
+  template:
+    src: ipredator.auth.j2
+    dest: /etc/openvpn/ipredator.auth
+    owner: root
+    group: root
+    mode: 0600
+  register: ipredator_auth
+
+- name: deploy ipredator.ta.key
+  copy:
+    src: ../../keys/ipredator.ta.key
+    dest: /etc/openvpn/ipredator.ta.key
+    owner: root
+    group: root
+    mode: 0600
+  register: ipredator_key
+
+- name: enable VPNs
+  lineinfile:
+    dest: /etc/default/openvpn
+    line: AUTOSTART="all"
+  register: openvpn_default
+
+- name: restart openvpn
+  service:
+    name: openvpn@ipredator
+    state: restarted
+    enabled: yes
+  when: openvpn_package.changed or openvpn_config.changed or openvpn_perms.changed or ipredator_auth.changed or ipredator_key.changed or openvpn_default.changed

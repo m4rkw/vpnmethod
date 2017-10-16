@@ -1,0 +1,21 @@
+conn L2TP-PSK-NAT
+    rightsubnet=vhost:%priv,%no
+    also=L2TP-PSK-noNAT
+
+conn L2TP-PSK-noNAT
+    authby=secret
+    pfs=no
+    auto=add
+    keyingtries=3
+    rekey=no
+    type=transport
+    left={{ ansible_default_ipv4.address }}
+    leftnexthop={{ ansible_default_ipv4.address }}
+    leftprotoport=17/%any
+    right=%any
+    rightprotoport=17/%any
+    dpddelay=15
+    dpdtimeout=30
+    dpdaction=clear
+    #Uncomment the line below for OSX on MAC? untested!
+    #rightprotoport=17/0

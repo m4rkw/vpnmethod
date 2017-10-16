@@ -1,0 +1,109 @@
+---
+- name: install packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - xl2tpd
+    - ppp
+    - strongswan
+    - strongswan-charon
+    - strongswan-starter
+  register: ipsec_packages
+
+- name: copy files
+  synchronize:
+    src: ipsec/
+    dest: /etc/
+    owner: no
+    group: no
+    perms: no
+    times: no
+  register: ipsec_config1
+
+- name: template options.xl2tpd for xl2tpd
+  template:
+    src: xl2tpd-options.xl2tpd.j2
+    dest: /etc/xl2tpd/options.xl2tpd
+    owner: root
+    group: root
+    mode: 0644
+  register: ipsec_config2
+
+- name: template options.xl2tpd for xl2tpd
+  template:
+    src: ppp-options.xl2tpd.j2
+    dest: /etc/ppp/options.xl2tpd
+    owner: root
+    group: root
+    mode: 0644
+  register: ipsec_config3
+
+- name: set permissions
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+    recurse: yes
+  with_items:
+    - /etc/ipsec/ppp
+    - /etc/ipsec/xl2tpd
+  register: ipsec_config_perms
+
+- name: set permissions
+  file:
+    path: /etc/ipsec.updown
+    owner: root
+    group: root
+    mode: 0755
+    state: file
+  register: ipsec_config_perms2
+
+- name: template chap secrets
+  template:
+    src: chap-secrets.j2
+    dest: /etc/ppp/chap-secrets
+    owner: root
+    group: root
+    mode: 0600
+  register: ipsec_chap_secrets
+
+- name: template ipsec secrets
+  template:
+    src: ipsec.secrets.j2
+    dest: /etc/ipsec.secrets
+    owner: root
+    group: root
+    mode: 0600
+  register: ipsec_secrets
+
+- name: template ipsec.conf
+  template:
+    src: ipsec.conf.j2
+    dest: /etc/ipsec.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: ipsec_conf
+
+- name: template l2tp-psk.conf
+  template:
+    src: l2tp-psk.conf.j2
+    dest: /etc/ipsec.d/l2tp-psk.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: l2tp_psk_conf
+
+- name: start and enable xl2tpd
+  service:
+    name: xl2tpd
+    state: restarted
+    enabled: yes
+  when: ipsec_packages.changed or ipsec_config1.changed or ipsec_config2.changed or ipsec_config3.changed or ipsec_config_perms.changed or ipsec_config_perms2.changed or ipsec_chap_secrets.changed or ipsec_secrets.changed or ipsec_conf.changed or l2tp_psk_conf.changed
+
+- name: start and enable ipsec
+  command: /usr/sbin/ipsec restart
+  when: ipsec_packages.changed or ipsec_config1.changed or ipsec.config2.changed or ipsec.config3.changed or ipsec_config_perms.changed or ipsec_config_perms2.changed or ipsec_chap_secrets.changed or ipsec_secrets.changed or ipsec_conf.changed or l2tp_psk_conf.changed

@@ -1,0 +1,20 @@
+---
+- name: Install python so we can run ansible
+  hosts: server
+  become: true
+  gather_facts: no
+  roles:
+  - python
+
+- name: Deploy VPN config
+  hosts: server
+  become: true
+  vars_files:
+    - "../vars/secrets.yml"
+
+  roles:
+  - sysctl
+  - tor
+  - privoxy
+  - ipsec
+  - openvpn
