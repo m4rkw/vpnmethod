@@ -103,3 +103,6 @@ port: 8118
 
 This will route the traffic for that VPN profile via Privoxy and over the tor
 network.
+
+For detailed instructions for setting up the profiles on macOS and iOS go
+here: https://vpnmethod.com/
