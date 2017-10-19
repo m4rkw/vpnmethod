@@ -1,7 +1,7 @@
 VPN Method
 ==========
 
-This is an example of a VPN server configuration for Debian and
+This is an example of a VPN server configuration for Ubuntu and other
 Debian-compatible distributions.
 
 The configuration is applied using ansible and installs the following
